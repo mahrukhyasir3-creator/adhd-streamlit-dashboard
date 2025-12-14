@@ -3,3 +3,7 @@ pandas
 scikit-learn
 openpyxl
 numpy
+speechrecognition
+pillow
+pyaudio
+
