@@ -3,19 +3,18 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-import speech_recognition as sr
 from PIL import Image
 
-# -----------------------------------
+# ----------------------------------
 # PAGE CONFIG
 st.set_page_config(page_title="🧠 ADHD Smart Dashboard", layout="wide")
-st.title("🧠 ADHD Smart Monitoring Dashboard Pro")
+st.title("🧠 ADHD Smart Monitoring Dashboard")
 
-# -----------------------------------
+# ----------------------------------
 # LOAD DATA
 df = pd.read_excel("ADHD_vs_Control_Sentiment_Dataset_500.xlsx")
 
-# -----------------------------------
+# ----------------------------------
 # TRAIN MODELS
 vectorizer = TfidfVectorizer()
 X = vectorizer.fit_transform(df["Text"])
@@ -29,52 +28,30 @@ mood_model.fit(X, df["Mood"])
 sentiment_model = LogisticRegression(max_iter=1000)
 sentiment_model.fit(X, df["Sentiment"])
 
-# -----------------------------------
-# INPUT SECTION
-st.subheader("🧾 Input Options")
+# ----------------------------------
+# USER INPUT SECTION
+st.subheader("📝 Input Options")
 
-tab1, tab2, tab3 = st.tabs(["✍️ Text / Keywords", "🎤 Voice Input", "🖼️ Image Upload"])
+colA, colB = st.columns(2)
 
-input_text = ""
+with colA:
+    user_text = st.text_area("Enter text about feelings / behavior")
+    user_keywords = st.text_input("Enter keywords (comma separated)")
 
-# -------- TEXT / KEYWORDS
-with tab1:
-    user_text = st.text_area("Enter your thoughts or behaviour:")
-    user_keywords = st.text_input("Or enter keywords (comma separated)")
-    if user_text.strip() != "":
-        input_text = user_text
-    elif user_keywords.strip() != "":
-        input_text = user_keywords
+with colB:
+    uploaded_image = st.file_uploader("Upload image (optional)", type=["jpg", "png", "jpeg"])
+    if uploaded_image:
+        img = Image.open(uploaded_image)
+        st.image(img, caption="Uploaded Image", width=200)
 
-# -------- VOICE INPUT
-with tab2:
-    st.info("Click button and speak clearly (English)")
-    if st.button("🎙️ Record Voice"):
-        r = sr.Recognizer()
-        with sr.Microphone() as source:
-            st.write("Listening...")
-            audio = r.listen(source)
-        try:
-            voice_text = r.recognize_google(audio)
-            st.success("Voice Converted to Text:")
-            st.write(voice_text)
-            input_text = voice_text
-        except:
-            st.error("Could not recognize voice")
+# Decide final input
+input_text = user_text if user_text.strip() != "" else user_keywords
 
-# -------- IMAGE INPUT
-with tab3:
-    image = st.file_uploader("Upload face/behaviour image (optional)", type=["jpg", "png", "jpeg"])
-    if image:
-        img = Image.open(image)
-        st.image(img, caption="Uploaded Image", width=250)
-        st.info("Image added as behavioural context (non-clinical support)")
-
-# -----------------------------------
-# ANALYSIS
+# ----------------------------------
+# ANALYZE BUTTON
 if st.button("🔍 Analyze"):
     if input_text.strip() == "":
-        st.warning("Please provide text, keywords or voice input")
+        st.warning("Please enter text or keywords")
     else:
         vec = vectorizer.transform([input_text])
 
@@ -82,85 +59,61 @@ if st.button("🔍 Analyze"):
         mood = mood_model.predict(vec)[0]
         sentiment = sentiment_model.predict(vec)[0]
 
-        # -----------------------------------
+        # ----------------------------------
+        # ADHD ALERT LOGIC
+        alert = "Normal"
+        if group == "ADHD" and mood in ["Angry", "Frustrated"]:
+            alert = "⚠️ Hyperactivity Possible"
+        elif group == "ADHD":
+            alert = "⚠️ At Risk"
+
+        # ----------------------------------
         # RESULTS
         st.subheader("📊 Analysis Result")
 
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("🧠 Condition", group)
-        c2.metric("🙂 Mood", mood)
-        c3.metric("💭 Sentiment", sentiment)
+        c1.metric("Patient Type", group)
+        c2.metric("Mood", mood)
+        c3.metric("Sentiment", sentiment)
+        c4.metric("Alert Level", alert)
 
-        # ADHD ALERT LOGIC
-        adhd_alert = "LOW"
-        if group == "ADHD" and mood in ["Angry", "Frustrated"]:
-            adhd_alert = "⚠️ HIGH (Possible Hyper Episode Risk)"
-
-        c4.metric("🚨 ADHD Alert", adhd_alert)
-
-        # -----------------------------------
-        # DETAILED INTERPRETATION
-        st.subheader("🧩 Interpretation")
-
-        if group == "ADHD":
-            st.warning("User shows ADHD-related behavioural patterns")
-        else:
-            st.success("User currently shows normal behavioural patterns")
-
-        if adhd_alert.startswith("⚠️"):
-            st.error("""
-            ⚠️ **Warning:**  
-            User is currently calm but may become hyperactive later.
-            Monitoring and intervention recommended.
-            """)
-
-        # -----------------------------------
-        # SMART GUIDED SUGGESTIONS
-        st.subheader("💡 Personalized Guidance")
+        # ----------------------------------
+        # GUIDANCE & SUGGESTIONS
+        st.subheader("💡 Proper Guidance")
 
         if mood == "Happy":
-            st.success("""
-            ✅ **You are doing well**
-            - Maintain routine
-            - Avoid overstimulation
-            - Keep sleep schedule fixed
-            """)
+            st.success("Mood is stable. Maintain routine, sleep schedule, and balanced activities 🌟")
 
         elif mood == "Sad":
-            st.info("""
-            💙 **Low mood detected**
-            - Take 5–10 min breaks
-            - Light physical activity
-            - Talk to a trusted person
-            """)
+            st.info("Encourage breaks, light exercise, and emotional support 💙")
 
         elif mood == "Angry":
-            st.warning("""
-            🔕 **Anger detected**
-            - Deep breathing (4-7-8)
-            - Reduce screen time
-            - Quiet environment recommended
-            """)
+            st.warning("Recommend breathing exercises, quiet environment, and screen reduction 🔕")
 
         elif mood == "Frustrated":
-            st.warning("""
-            🧩 **Frustration detected**
-            - Break task into small steps
-            - Use timer (Pomodoro)
-            - Remove distractions
-            """)
+            st.warning("Break tasks into small steps and use reminders 🧩")
 
-        if group == "ADHD":
-            st.markdown("""
-            ### 🧠 ADHD-Specific Guidance
-            - Use reminders & alarms ⏰  
+        if alert == "⚠️ Hyperactivity Possible":
+            st.error("""
+            **ADHD Hyperactivity Alert**
+            - Reduce stimulation  
             - Avoid multitasking  
-            - Fixed daily routine  
-            - Short focused work sessions  
-            - Mindfulness / breathing exercises  
+            - Use grounding techniques  
+            - Consider professional consultation
             """)
 
-# -----------------------------------
+        elif alert == "⚠️ At Risk":
+            st.info("""
+            **ADHD Risk Detected**
+            - Monitor behavior changes  
+            - Maintain structured routine  
+            - Use task timers  
+            """)
+
+        else:
+            st.success("No immediate ADHD risk detected. Maintain healthy habits ✅")
+
+# ----------------------------------
 st.markdown("---")
-st.caption("🧠 ADHD Smart Monitoring Dashboard | Academic & Assistive Use")
+st.caption("ADHD Smart Dashboard • Educational & Support Tool 💙")
 
