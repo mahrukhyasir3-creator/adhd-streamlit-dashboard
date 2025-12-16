@@ -2,8 +2,6 @@ streamlit
 pandas
 scikit-learn
 openpyxl
-numpy
-pillow
 
 
 
