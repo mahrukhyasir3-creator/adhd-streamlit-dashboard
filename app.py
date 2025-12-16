@@ -32,6 +32,21 @@ h1 { text-align:center; color:#4b4b9f; }
 st.title("🧠 ADHD Smart Support Dashboard")
 st.caption("Mood-aware guidance for ADHD and non-ADHD users")
 
+# ================= SIDEBAR (DATE & TIME) =================
+st.sidebar.title("🗓️ Daily Monitor")
+
+now = datetime.now()
+st.sidebar.markdown(f"**📅 Date:** {now.strftime('%A, %d %B %Y')}")
+st.sidebar.markdown(f"**⏰ Time:** {now.strftime('%H:%M:%S')}")
+
+st.sidebar.subheader("🔔 Daily Self-Care Reminder")
+st.sidebar.info("""
+• One task at a time  
+• Take short breaks  
+• Avoid overload  
+• Maintain sleep routine  
+""")
+
 # ================= LOAD DATA =================
 df = pd.read_excel("ADHD_vs_Control_Sentiment_Dataset_500.xlsx")
 
@@ -48,6 +63,7 @@ st.subheader("✍️ Enter Feelings / Behavior")
 user_text = st.text_area("Write behavior or feelings")
 keywords = st.text_input("OR enter keywords only")
 
+# Keywords-only support
 input_text = user_text.strip() if user_text.strip() else keywords.strip()
 
 # ================= ANALYZE =================
@@ -56,10 +72,12 @@ if st.button("🔍 Analyze"):
         st.warning("Please enter text or keywords")
     else:
         vec = vectorizer.transform([input_text])
+
         group = group_model.predict(vec)[0]
         mood = mood_model.predict(vec)[0]
         sentiment = sentiment_model.predict(vec)[0]
 
+        # ADHD severity
         severity = "Low"
         hyper = False
         if group == "ADHD" and mood in ["Angry", "Frustrated"]:
@@ -80,9 +98,10 @@ if st.button("🔍 Analyze"):
         # ============ CONTROL PERSON ============
         if group == "Control":
             st.success(f"""
-### ✅ Normal Behavior Detected ({mood})
+### ✅ Normal Pattern Detected ({mood})
+
 **General Guidance:**
-✔ Maintain daily routine  
+✔ Maintain routine  
 ✔ Balanced workload  
 ✔ Adequate sleep  
 ✔ Healthy social interaction  
@@ -93,48 +112,50 @@ if st.button("🔍 Analyze"):
         # ============ ADHD PERSON ============
         if group == "ADHD":
 
-            # -------- HAPPY --------
+            # ---- HAPPY ----
             if mood == "Happy":
                 st.success("""
 ### 😊 ADHD + Happy Mood
 You are doing well.
 
 ✔ Maintain routine  
-✔ Keep positive habits  
-✔ No exercise needed right now  
+✔ Continue positive habits  
+✔ No exercise required right now  
 """)
 
-            # -------- SAD --------
+            # ---- SAD ----
             elif mood == "Sad":
                 st.warning("""
 ### 😔 ADHD + Sad Mood
+
 **Guidance:**
 ✔ Emotional support  
 ✔ Reduce workload  
 ✔ Stay connected  
 
-**Recommended Exercises:**
-🫁 Slow breathing (4–6 pattern)  
+**Exercises:**
+🫁 Slow breathing (4 sec in, 6 sec out × 5)  
 🚶 10-minute light walk  
-🧠 Write thoughts on paper  
+🧠 Write feelings on paper  
 """)
 
-            # -------- ANGRY --------
+            # ---- ANGRY ----
             elif mood == "Angry":
                 st.error("""
 ### 😠 ADHD + Angry Mood
+
 **Guidance:**
 ✔ Pause current task  
-✔ Reduce noise & screen  
 ✔ Calm environment  
+✔ Reduce noise & screen  
 
 **Relaxation Exercises:**
 🫁 Deep breathing (5 rounds)  
-✋ Progressive muscle relaxation  
-🚶 Short walk before reacting  
+✋ Muscle relaxation  
+🚶 Walk before reacting  
 """)
 
-            # -------- FRUSTRATED / HYPER --------
+            # ---- FRUSTRATED / HYPER ----
             elif mood == "Frustrated":
                 st.error("""
 ### ⚡ ADHD + Frustrated / Hyper Mood
@@ -142,15 +163,15 @@ You are doing well.
 
 **Immediate Steps:**
 ✔ Stop multitasking  
-✔ Sit in quiet place  
+✔ Quiet space  
 ✔ One instruction at a time  
 
 **Strong Calming Exercises:**
 🫁 Box breathing (4-4-4-4)  
 🧠 Grounding: name 5 things you see  
-🚶 Slow movement (no running)  
+🚶 Slow body movement  
 
-⚠️ If this repeats often, professional help is advised.
+⚠️ Repeated pattern → professional help advised
 """)
 
 # ================= END =================
