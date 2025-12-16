@@ -36,6 +36,7 @@ h1 {
 """, unsafe_allow_html=True)
 
 st.title("🧠 ADHD Smart Support Dashboard")
+st.caption("For general ADHD behavior monitoring (children & adults)")
 
 # ================= SIDEBAR =================
 st.sidebar.title("🗓️ Daily Monitor")
@@ -43,12 +44,13 @@ now = datetime.now()
 st.sidebar.markdown(f"**📅 Date:** {now.strftime('%d %B %Y')}")
 st.sidebar.markdown(f"**⏰ Time:** {now.strftime('%H:%M')}")
 
-st.sidebar.subheader("👨‍👩‍👧 Parent Reminder")
+st.sidebar.subheader("🔔 Daily Self-Care Reminder")
 st.sidebar.info("""
-• Observe child calmly  
-• Avoid shouting  
-• Give one task at a time  
-• Appreciate small effort  
+• Stay calm and structured  
+• One task at a time  
+• Take short breaks  
+• Limit screen overload  
+• Maintain sleep routine  
 """)
 
 # ================= LOAD DATA =================
@@ -67,12 +69,12 @@ sentiment_model = LogisticRegression(max_iter=1000)
 sentiment_model.fit(X, df["Sentiment"])
 
 # ================= INPUT =================
-st.subheader("✍️ Enter Child / Person Behavior")
+st.subheader("✍️ Enter Behavior / Feelings")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    user_text = st.text_area("Describe behavior (or leave empty)")
+    user_text = st.text_area("Describe observed behavior or feelings")
     keywords = st.text_input("OR enter keywords only")
 
 with col2:
@@ -80,7 +82,7 @@ with col2:
     if img:
         st.image(Image.open(img), width=200)
 
-# ✅ KEYWORDS ONLY WORKING
+# Keywords-only support
 input_text = user_text.strip() if user_text.strip() else keywords.strip()
 
 # ================= LOG FILE =================
@@ -105,7 +107,7 @@ if st.button("🔍 Analyze Behavior"):
         mood = mood_model.predict(vec)[0]
         sentiment = sentiment_model.predict(vec)[0]
 
-        # ---------------- SEVERITY LOGIC ----------------
+        # -------- ADHD SEVERITY & ALERT --------
         hyper_alert = False
         severity = "Low"
 
@@ -117,73 +119,74 @@ if st.button("🔍 Analyze Behavior"):
 
         save_log(now.strftime("%Y-%m-%d"), group, mood, severity)
 
-        # ---------------- RESULT ----------------
+        # -------- RESULTS --------
         st.subheader("📊 Analysis Result")
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Person Type", group)
+        c1.metric("User Type", group)
         c2.metric("Mood", mood)
         c3.metric("Sentiment", sentiment)
         c4.metric("ADHD Severity", severity)
 
         # ================= GUIDANCE =================
-        st.subheader("🧭 Guidance & Support")
+        st.subheader("🧭 Personalized Guidance")
 
-        # ---------- NORMAL PERSON ----------
+        # ---- NORMAL USER ----
         if group == "Control":
             st.success("""
-### ✅ Normal Behavior Detected
+### ✅ Typical Behavior Pattern
 **Guidance:**
-✔ Maintain routine  
-✔ Encourage positive habits  
-✔ Balanced screen time  
+✔ Maintain healthy routine  
+✔ Balanced workload  
+✔ Regular sleep and breaks  
 """)
 
-        # ---------- ADHD PERSON ----------
+        # ---- ADHD (MODERATE) ----
         if group == "ADHD" and not hyper_alert:
             st.warning("""
-### ⚠️ ADHD Detected (Moderate)
-**What to do:**
-✔ Give one task at a time  
-✔ Use visual reminders  
-✔ Break work into small steps  
-✔ Keep routine consistent  
+### ⚠️ ADHD Indicators Detected (Moderate)
+**Recommended Actions:**
+✔ Use reminders or planners  
+✔ Break tasks into smaller steps  
+✔ Reduce distractions  
+✔ Maintain consistent routine  
 """)
 
-        # ---------- HYPER ALERT ----------
+        # ---- HYPER ALERT ----
         if hyper_alert:
             st.error("""
-### 🚨 HYPERACTIVITY ALERT
-**For Parents / Caregivers:**
-1️⃣ Move child to calm place  
-2️⃣ Speak softly, no shouting  
-3️⃣ Deep breathing together  
-4️⃣ Reduce noise & screen  
-5️⃣ Observe for next 30 minutes  
+### 🚨 Hyperactivity Risk Alert
+**Immediate Guidance:**
+1️⃣ Move to a calm environment  
+2️⃣ Practice slow breathing  
+3️⃣ Avoid multitasking  
+4️⃣ Reduce noise & screen exposure  
 
-⚠️ If repeated daily → consult specialist
+⚠️ If this pattern repeats frequently, consider professional consultation.
 """)
 
-        # ================= CHILD EXERCISES =================
-        st.subheader("🧩 Child-Friendly Exercises")
+        # ================= EXERCISES =================
+        st.subheader("🧩 Recommended Exercises & Practices")
 
         st.markdown("""
-**🫁 Calm Breathing**
-- Breathe in nose (4 sec)  
-- Breathe out mouth (6 sec)  
+**🫁 Breathing Exercise**
+- Inhale slowly for 4 seconds  
+- Hold for 2 seconds  
+- Exhale for 6 seconds  
 - Repeat 5 times  
 
-**🎯 Focus Game**
-- Ask child to color or draw for 5 minutes  
-- No phone / TV  
+**🧠 Focus Practice**
+- Choose one simple task  
+- Set timer for 10 minutes  
+- No phone, no interruptions  
 
-**🚶 Movement**
-- Slow walk  
-- Stretch arms  
-- Jumping jacks (10 times)  
+**🚶 Physical Movement**
+- 10–15 minute walk  
+- Gentle stretching  
+- Light mobility exercises  
 """)
 
 # ================= WEEKLY LOG =================
-st.subheader("📅 Weekly Behavior Summary (Last Section)")
+st.subheader("📅 Recent Behavior Summary")
 
 if os.path.exists(log_file):
     log_df = pd.read_csv(log_file)
