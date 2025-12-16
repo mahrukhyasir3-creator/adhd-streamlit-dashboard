@@ -4,6 +4,6 @@ scikit-learn
 openpyxl
 numpy
 pillow
-fpdf
+
 
 
