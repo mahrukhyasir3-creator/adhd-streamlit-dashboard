@@ -12,26 +12,31 @@ from fpdf import FPDF
 # ================= PAGE CONFIG =================
 st.set_page_config(page_title="🧠 ADHD Smart Dashboard", layout="wide")
 
-# ================= BACKGROUND + UI =================
+# ================= BRAIN BACKGROUND (FIXED) =================
 st.markdown("""
 <style>
-.stApp {
+[data-testid="stAppViewContainer"] {
     background-image: url("https://images.unsplash.com/photo-1530023367847-a683933f4178");
     background-size: cover;
-    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+[data-testid="stHeader"] {
+    background: rgba(0,0,0,0);
+}
+
+[data-testid="stVerticalBlock"] > div {
+    background: rgba(255,255,255,0.92);
+    padding: 20px;
+    border-radius: 18px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    margin-bottom: 20px;
 }
 
 h1 {
     text-align: center;
     color: #4b4b9f;
-}
-
-div[data-testid="stVerticalBlock"] > div {
-    background-color: rgba(255,255,255,0.92);
-    padding: 20px;
-    border-radius: 16px;
-    box-shadow: 0px 8px 20px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
 }
 
 .stButton > button {
@@ -133,8 +138,7 @@ if st.button("🔍 Analyze"):
 
         if severity == "High":
             st.error("""
-### ⚠️ High ADHD Risk
-**What to do now:**
+### ⚠️ High ADHD Risk – What to do now
 1️⃣ Sit in a quiet place  
 2️⃣ Deep breathing (inhale 4 sec, exhale 6 sec)  
 3️⃣ Avoid screens for 30 minutes  
@@ -144,7 +148,6 @@ if st.button("🔍 Analyze"):
         elif severity == "Medium":
             st.warning("""
 ### ⚠️ Moderate ADHD Signs
-**Guidance:**
 ✔ Use task timers (25 min focus)  
 ✔ Break tasks into small steps  
 ✔ Light physical activity
@@ -163,24 +166,23 @@ if st.button("🔍 Analyze"):
 
         st.markdown("""
 **🫁 Breathing Exercise**
-- Sit comfortably  
 - Inhale 4 seconds  
 - Hold 2 seconds  
 - Exhale 6 seconds  
 - Repeat 5 times  
 
-**🚶 Light Physical Exercise**
-- 10–15 minutes walk  
+**🚶 Physical Exercise**
+- 10–15 minute walk  
 - Stretch arms & shoulders  
-- Neck rotation (slow)  
+- Slow neck rotation  
 
 **🧠 Focus Exercise**
 - Choose one task  
 - Set timer for 10 minutes  
-- No phone / no multitasking  
+- No phone, no multitasking
 """)
 
-# ================= WEEKLY DATA (LAST SECTION) =================
+# ================= WEEKLY DATA (LAST) =================
 st.subheader("📈 Weekly Mood Trend & History")
 
 if os.path.exists(log_file):
@@ -210,6 +212,4 @@ if st.button("📥 Download Weekly Report (PDF)"):
         create_pdf(df_pdf)
         with open("weekly_report.pdf","rb") as f:
             st.download_button("Download PDF", f, file_name="ADHD_Weekly_Report.pdf")
-
-
 
