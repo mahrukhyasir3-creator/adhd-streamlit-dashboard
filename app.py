@@ -7,27 +7,21 @@ import calendar
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from PIL import Image
-from fpdf import FPDF
 
 # ================= PAGE CONFIG =================
-st.set_page_config(page_title="🧠 ADHD Smart Dashboard", layout="wide")
+st.set_page_config(page_title="🧠 ADHD Smart Support Dashboard", layout="wide")
 
-# ================= BRAIN BACKGROUND (FIXED) =================
+# ================= BACKGROUND =================
 st.markdown("""
 <style>
 [data-testid="stAppViewContainer"] {
     background-image: url("https://images.unsplash.com/photo-1530023367847-a683933f4178");
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
-}
-
-[data-testid="stHeader"] {
-    background: rgba(0,0,0,0);
 }
 
 [data-testid="stVerticalBlock"] > div {
-    background: rgba(255,255,255,0.92);
+    background: rgba(255,255,255,0.93);
     padding: 20px;
     border-radius: 18px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.15);
@@ -38,33 +32,23 @@ h1 {
     text-align: center;
     color: #4b4b9f;
 }
-
-.stButton > button {
-    background-color: #6a5acd;
-    color: white;
-    border-radius: 10px;
-    font-size: 16px;
-}
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🧠 ADHD Smart Monitoring Dashboard")
+st.title("🧠 ADHD Smart Support Dashboard")
 
 # ================= SIDEBAR =================
 st.sidebar.title("🗓️ Daily Monitor")
-
 now = datetime.now()
-st.sidebar.markdown(f"**📅 Date:** {now.strftime('%A, %d %B %Y')}")
-st.sidebar.markdown(f"**⏰ Time:** {now.strftime('%H:%M:%S')}")
-st.sidebar.text(calendar.month(now.year, now.month))
+st.sidebar.markdown(f"**📅 Date:** {now.strftime('%d %B %Y')}")
+st.sidebar.markdown(f"**⏰ Time:** {now.strftime('%H:%M')}")
 
-st.sidebar.subheader("🔔 Daily Reminder")
+st.sidebar.subheader("👨‍👩‍👧 Parent Reminder")
 st.sidebar.info("""
-✔ Sleep 7–8 hours  
-✔ Avoid multitasking  
-✔ Drink water  
-✔ Take short breaks  
-✔ Light exercise
+• Observe child calmly  
+• Avoid shouting  
+• Give one task at a time  
+• Appreciate small effort  
 """)
 
 # ================= LOAD DATA =================
@@ -83,133 +67,126 @@ sentiment_model = LogisticRegression(max_iter=1000)
 sentiment_model.fit(X, df["Sentiment"])
 
 # ================= INPUT =================
-st.subheader("✍️ Input Options")
+st.subheader("✍️ Enter Child / Person Behavior")
+
 col1, col2 = st.columns(2)
 
 with col1:
-    user_text = st.text_area("Enter feelings / behavior")
-    keywords = st.text_input("Enter keywords")
+    user_text = st.text_area("Describe behavior (or leave empty)")
+    keywords = st.text_input("OR enter keywords only")
 
 with col2:
     img = st.file_uploader("Upload image (optional)", type=["jpg","png","jpeg"])
     if img:
-        st.image(Image.open(img), width=220)
+        st.image(Image.open(img), width=200)
 
-input_text = user_text if user_text.strip() else keywords
+# ✅ KEYWORDS ONLY WORKING
+input_text = user_text.strip() if user_text.strip() else keywords.strip()
 
 # ================= LOG FILE =================
 log_file = "behavior_log.csv"
 
-def save_log(date, mood, sentiment, group, severity):
-    row = pd.DataFrame([[date, mood, sentiment, group, severity]],
-        columns=["Date","Mood","Sentiment","Group","Severity"])
+def save_log(date, group, mood, severity):
+    row = pd.DataFrame([[date, group, mood, severity]],
+        columns=["Date","Group","Mood","Severity"])
     if os.path.exists(log_file):
         row.to_csv(log_file, mode="a", header=False, index=False)
     else:
         row.to_csv(log_file, index=False)
 
-# ================= ANALYSIS =================
-if st.button("🔍 Analyze"):
-    if input_text.strip()=="":
+# ================= ANALYZE =================
+if st.button("🔍 Analyze Behavior"):
+    if input_text == "":
         st.warning("Please enter text or keywords")
     else:
         vec = vectorizer.transform([input_text])
+
         group = group_model.predict(vec)[0]
         mood = mood_model.predict(vec)[0]
         sentiment = sentiment_model.predict(vec)[0]
 
-        # ADHD Severity
+        # ---------------- SEVERITY LOGIC ----------------
+        hyper_alert = False
         severity = "Low"
-        if group=="ADHD" and mood in ["Angry","Frustrated"]:
+
+        if group == "ADHD" and mood in ["Angry", "Frustrated"]:
             severity = "High"
-        elif group=="ADHD":
+            hyper_alert = True
+        elif group == "ADHD":
             severity = "Medium"
 
-        save_log(now.strftime("%Y-%m-%d"), mood, sentiment, group, severity)
+        save_log(now.strftime("%Y-%m-%d"), group, mood, severity)
 
-        c1,c2,c3,c4 = st.columns(4)
-        c1.metric("Patient Type", group)
+        # ---------------- RESULT ----------------
+        st.subheader("📊 Analysis Result")
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Person Type", group)
         c2.metric("Mood", mood)
         c3.metric("Sentiment", sentiment)
-        c4.metric("Severity", severity)
+        c4.metric("ADHD Severity", severity)
 
         # ================= GUIDANCE =================
         st.subheader("🧭 Guidance & Support")
 
-        if severity == "High":
-            st.error("""
-### ⚠️ High ADHD Risk – What to do now
-1️⃣ Sit in a quiet place  
-2️⃣ Deep breathing (inhale 4 sec, exhale 6 sec)  
-3️⃣ Avoid screens for 30 minutes  
-4️⃣ Ask for support or professional help
-""")
-
-        elif severity == "Medium":
-            st.warning("""
-### ⚠️ Moderate ADHD Signs
-✔ Use task timers (25 min focus)  
-✔ Break tasks into small steps  
-✔ Light physical activity
-""")
-
-        else:
+        # ---------- NORMAL PERSON ----------
+        if group == "Control":
             st.success("""
-### ✅ Stable Condition
+### ✅ Normal Behavior Detected
+**Guidance:**
 ✔ Maintain routine  
-✔ Keep sleep schedule  
-✔ Continue healthy habits
+✔ Encourage positive habits  
+✔ Balanced screen time  
 """)
 
-        # ================= EXERCISES =================
-        st.subheader("🧘 Recommended Exercises")
+        # ---------- ADHD PERSON ----------
+        if group == "ADHD" and not hyper_alert:
+            st.warning("""
+### ⚠️ ADHD Detected (Moderate)
+**What to do:**
+✔ Give one task at a time  
+✔ Use visual reminders  
+✔ Break work into small steps  
+✔ Keep routine consistent  
+""")
+
+        # ---------- HYPER ALERT ----------
+        if hyper_alert:
+            st.error("""
+### 🚨 HYPERACTIVITY ALERT
+**For Parents / Caregivers:**
+1️⃣ Move child to calm place  
+2️⃣ Speak softly, no shouting  
+3️⃣ Deep breathing together  
+4️⃣ Reduce noise & screen  
+5️⃣ Observe for next 30 minutes  
+
+⚠️ If repeated daily → consult specialist
+""")
+
+        # ================= CHILD EXERCISES =================
+        st.subheader("🧩 Child-Friendly Exercises")
 
         st.markdown("""
-**🫁 Breathing Exercise**
-- Inhale 4 seconds  
-- Hold 2 seconds  
-- Exhale 6 seconds  
+**🫁 Calm Breathing**
+- Breathe in nose (4 sec)  
+- Breathe out mouth (6 sec)  
 - Repeat 5 times  
 
-**🚶 Physical Exercise**
-- 10–15 minute walk  
-- Stretch arms & shoulders  
-- Slow neck rotation  
+**🎯 Focus Game**
+- Ask child to color or draw for 5 minutes  
+- No phone / TV  
 
-**🧠 Focus Exercise**
-- Choose one task  
-- Set timer for 10 minutes  
-- No phone, no multitasking
+**🚶 Movement**
+- Slow walk  
+- Stretch arms  
+- Jumping jacks (10 times)  
 """)
 
-# ================= WEEKLY DATA (LAST) =================
-st.subheader("📈 Weekly Mood Trend & History")
+# ================= WEEKLY LOG =================
+st.subheader("📅 Weekly Behavior Summary (Last Section)")
 
 if os.path.exists(log_file):
     log_df = pd.read_csv(log_file)
-    log_df["Date"] = pd.to_datetime(log_df["Date"])
-    mood_map = {"Happy":1,"Sad":2,"Frustrated":3,"Angry":4}
-    log_df["MoodScore"] = log_df["Mood"].map(mood_map)
-
-    st.line_chart(log_df.set_index("Date")["MoodScore"])
     st.dataframe(log_df.tail(7))
 else:
-    st.info("No behavior data recorded yet.")
-
-# ================= PDF REPORT =================
-def create_pdf(data):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    pdf.cell(0,10,"Weekly ADHD Monitoring Report", ln=True)
-    for _,row in data.iterrows():
-        pdf.cell(0,8,f"{row['Date']} | {row['Mood']} | {row['Severity']}", ln=True)
-    pdf.output("weekly_report.pdf")
-
-if st.button("📥 Download Weekly Report (PDF)"):
-    if os.path.exists(log_file):
-        df_pdf = pd.read_csv(log_file).tail(7)
-        create_pdf(df_pdf)
-        with open("weekly_report.pdf","rb") as f:
-            st.download_button("Download PDF", f, file_name="ADHD_Weekly_Report.pdf")
-
+    st.info("No behavior history available yet.")
