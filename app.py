@@ -7,31 +7,62 @@ from sklearn.linear_model import LogisticRegression
 # ================= PAGE CONFIG =================
 st.set_page_config(page_title="🧠 ADHD Smart Support Dashboard", layout="wide")
 
-# ================= BACKGROUND =================
+# ================= BEAUTIFUL UI THEME =================
 st.markdown("""
 <style>
+
+/* Background */
 [data-testid="stAppViewContainer"] {
     background-image: url("https://images.unsplash.com/photo-1530023367847-a683933f4178");
     background-size: cover;
     background-position: center;
 }
 
+/* Main card */
 [data-testid="stVerticalBlock"] > div {
     background: rgba(255,255,255,0.95);
     padding: 22px;
     border-radius: 18px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    margin-bottom: 20px;
+    margin-bottom: 22px;
 }
 
-h1 { text-align:center; color:#4b4b9f; }
+/* Title */
+h1 {
+    text-align: center;
+    color: #4b4b9f;
+}
+
+/* Result cards */
+.result-box {
+    padding: 18px;
+    border-radius: 14px;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Color themes */
+.green { background: #e8f8f5; color: #117864; }
+.yellow { background: #fef9e7; color: #9a7d0a; }
+.red { background: #fdecea; color: #922b21; }
+.blue { background: #ebf5fb; color: #154360; }
+.purple { background: #f4ecf7; color: #512e5f; }
+
+/* Buttons */
+.stButton > button {
+    background-color: #6a5acd;
+    color: white;
+    border-radius: 10px;
+    font-size: 16px;
+    padding: 8px 20px;
+}
 </style>
 """, unsafe_allow_html=True)
 
 st.title("🧠 ADHD Smart Support Dashboard")
-st.caption("Mood-based guidance & exercises (for ADHD users only)")
+st.caption("Mood-based guidance & exercises (clean and calm design)")
 
-# ================= SIDEBAR (DATE & TIME) =================
+# ================= SIDEBAR =================
 st.sidebar.title("🗓️ Daily Monitor")
 now = datetime.now()
 st.sidebar.markdown(f"**📅 Date:** {now.strftime('%A, %d %B %Y')}")
@@ -40,9 +71,9 @@ st.sidebar.markdown(f"**⏰ Time:** {now.strftime('%H:%M:%S')}")
 st.sidebar.subheader("🔔 Daily Reminder")
 st.sidebar.info("""
 • One task at a time  
-• Take short breaks  
+• Short breaks  
 • Avoid overload  
-• Sleep well  
+• Proper sleep  
 """)
 
 # ================= LOAD DATA =================
@@ -74,119 +105,76 @@ if st.button("🔍 Analyze"):
         sentiment = sentiment_model.predict(vec)[0]
 
         severity = "Low"
+        color = "green"
+
         if group == "ADHD" and mood in ["Angry", "Frustrated"]:
             severity = "High"
+            color = "red"
         elif group == "ADHD":
             severity = "Medium"
+            color = "yellow"
 
         # ================= RESULT =================
+        st.subheader("📊 Analysis Result")
+
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("User Type", group)
-        c2.metric("Mood", mood)
-        c3.metric("Sentiment", sentiment)
-        c4.metric("Severity", severity)
+        c1.markdown(f"<div class='result-box blue'>User Type<br>{group}</div>", unsafe_allow_html=True)
+        c2.markdown(f"<div class='result-box purple'>Mood<br>{mood}</div>", unsafe_allow_html=True)
+        c3.markdown(f"<div class='result-box blue'>Sentiment<br>{sentiment}</div>", unsafe_allow_html=True)
+        c4.markdown(f"<div class='result-box {color}'>Severity<br>{severity}</div>", unsafe_allow_html=True)
 
         st.subheader("🧭 Guidance")
 
         # ========== CONTROL ==========
         if group == "Control":
-            st.success(f"""
-### ✅ Normal Pattern ({mood})
-No ADHD intervention needed.
-
-✔ Maintain routine  
-✔ Balanced work  
-✔ Proper rest  
-""")
+            st.markdown("""
+<div class="result-box green">
+<b>Normal Pattern</b><br>
+Maintain routine, balanced work, and healthy rest.<br>
+(No exercises required)
+</div>
+""", unsafe_allow_html=True)
 
         # ========== ADHD ==========
         if group == "ADHD":
 
-            # ---------- HAPPY ----------
             if mood == "Happy":
-                st.success("""
-### 😊 ADHD + Happy Mood
-You are stable.
+                st.markdown("""
+<div class="result-box green">
+<b>ADHD + Happy</b><br>
+You are stable. Continue positive habits.<br>
+(No exercises needed)
+</div>
+""", unsafe_allow_html=True)
 
-✔ Continue routine  
-✔ Keep positive habits  
-✔ No exercises required  
-""")
-
-            # ---------- SAD ----------
             elif mood == "Sad":
-                st.warning("""
-### 😔 ADHD + Sad Mood
+                st.markdown("""
+<div class="result-box yellow">
+<b>ADHD + Sad</b><br>
+• Slow breathing (4 in / 6 out ×5)<br>
+• 10-minute light walk<br>
+• Write thoughts on paper
+</div>
+""", unsafe_allow_html=True)
 
-**Why:** Low energy, low motivation, emotional heaviness.
-
-#### 🫁 Exercise 1: Slow Breathing
-1. Sit comfortably  
-2. Inhale through nose for **4 seconds**  
-3. Exhale slowly through mouth for **6 seconds**  
-4. Repeat **5 times**
-
-#### 🚶 Exercise 2: Light Walk
-1. Walk slowly for **10 minutes**  
-2. Focus on breathing  
-3. No phone while walking
-
-#### 🧠 Exercise 3: Thought Release
-1. Write feelings on paper  
-2. Do NOT judge the thoughts  
-3. Tear the paper after writing
-""")
-
-            # ---------- ANGRY ----------
             elif mood == "Angry":
-                st.error("""
-### 😠 ADHD + Angry Mood
+                st.markdown("""
+<div class="result-box red">
+<b>ADHD + Angry</b><br>
+• Deep breathing (5 rounds)<br>
+• Muscle relaxation<br>
+• Walk away from trigger
+</div>
+""", unsafe_allow_html=True)
 
-**Why:** Over-stimulation and emotional overload.
-
-#### ✋ Exercise 1: Muscle Relaxation
-1. Tighten fists for **5 seconds**  
-2. Release slowly  
-3. Repeat **5 times**
-
-#### 🫁 Exercise 2: Deep Breathing
-1. Inhale for **5 seconds**  
-2. Hold for **2 seconds**  
-3. Exhale for **7 seconds**  
-4. Repeat **5 rounds**
-
-#### 🚶 Exercise 3: Cool-Down Walk
-1. Walk away from trigger  
-2. Walk for **5–10 minutes**  
-3. Do not talk until calm
-""")
-
-            # ---------- FRUSTRATED / HYPER ----------
             elif mood == "Frustrated":
-                st.error("""
-### ⚡ ADHD + Frustrated / Hyper Mood
-🚨 **High Hyperactivity Risk**
-
-#### 🧠 Exercise 1: Grounding (5-4-3-2-1)
-• Name **5 things** you see  
-• **4 things** you touch  
-• **3 things** you hear  
-• **2 things** you smell  
-• **1 thing** you taste  
-
-#### 🫁 Exercise 2: Box Breathing
-1. Inhale **4 sec**  
-2. Hold **4 sec**  
-3. Exhale **4 sec**  
-4. Hold **4 sec**  
-5. Repeat **5 cycles**
-
-#### 🚶 Exercise 3: Controlled Movement
-• Slow stretching  
-• No running  
-• No screen use  
-
-⚠️ If this happens daily → seek professional help
-""")
+                st.markdown("""
+<div class="result-box red">
+<b>ADHD + Hyper / Frustrated</b><br>
+• Grounding 5-4-3-2-1<br>
+• Box breathing (4-4-4-4)<br>
+• Quiet environment
+</div>
+""", unsafe_allow_html=True)
 
 # ================= END =================
