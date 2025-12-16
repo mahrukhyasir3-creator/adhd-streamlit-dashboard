@@ -36,7 +36,7 @@ h1 {
 """, unsafe_allow_html=True)
 
 st.title("🧠 ADHD Smart Support Dashboard")
-st.caption("For general ADHD behavior monitoring (children & adults)")
+st.caption("General-purpose behavior monitoring (child & adult)")
 
 # ================= SIDEBAR =================
 st.sidebar.title("🗓️ Daily Monitor")
@@ -46,11 +46,10 @@ st.sidebar.markdown(f"**⏰ Time:** {now.strftime('%H:%M')}")
 
 st.sidebar.subheader("🔔 Daily Self-Care Reminder")
 st.sidebar.info("""
-• Stay calm and structured  
 • One task at a time  
-• Take short breaks  
+• Short breaks  
 • Limit screen overload  
-• Maintain sleep routine  
+• Regular sleep routine  
 """)
 
 # ================= LOAD DATA =================
@@ -74,7 +73,7 @@ st.subheader("✍️ Enter Behavior / Feelings")
 col1, col2 = st.columns(2)
 
 with col1:
-    user_text = st.text_area("Describe observed behavior or feelings")
+    user_text = st.text_area("Describe behavior or feelings")
     keywords = st.text_input("OR enter keywords only")
 
 with col2:
@@ -107,7 +106,7 @@ if st.button("🔍 Analyze Behavior"):
         mood = mood_model.predict(vec)[0]
         sentiment = sentiment_model.predict(vec)[0]
 
-        # -------- ADHD SEVERITY & ALERT --------
+        # -------- ADHD SEVERITY LOGIC --------
         hyper_alert = False
         severity = "Low"
 
@@ -128,46 +127,51 @@ if st.button("🔍 Analyze Behavior"):
         c4.metric("ADHD Severity", severity)
 
         # ================= GUIDANCE =================
-        st.subheader("🧭 Personalized Guidance")
+        st.subheader("🧭 Guidance")
 
-        # ---- NORMAL USER ----
+        # ✅ CONTROL PERSON → NO EXERCISES
         if group == "Control":
             st.success("""
 ### ✅ Typical Behavior Pattern
-**Guidance:**
+No ADHD-related intervention required.
+
+**General Advice:**
 ✔ Maintain healthy routine  
 ✔ Balanced workload  
-✔ Regular sleep and breaks  
+✔ Regular breaks and sleep  
 """)
 
-        # ---- ADHD (MODERATE) ----
+        # ✅ ADHD (MODERATE)
         if group == "ADHD" and not hyper_alert:
             st.warning("""
 ### ⚠️ ADHD Indicators Detected (Moderate)
+
 **Recommended Actions:**
 ✔ Use reminders or planners  
-✔ Break tasks into smaller steps  
+✔ Break tasks into small steps  
 ✔ Reduce distractions  
 ✔ Maintain consistent routine  
 """)
 
-        # ---- HYPER ALERT ----
+        # ✅ ADHD (HIGH / HYPER ALERT)
         if hyper_alert:
             st.error("""
 ### 🚨 Hyperactivity Risk Alert
-**Immediate Guidance:**
+
+**Immediate Steps:**
 1️⃣ Move to a calm environment  
 2️⃣ Practice slow breathing  
 3️⃣ Avoid multitasking  
 4️⃣ Reduce noise & screen exposure  
 
-⚠️ If this pattern repeats frequently, consider professional consultation.
+⚠️ If this pattern repeats frequently, consult a professional.
 """)
 
-        # ================= EXERCISES =================
-        st.subheader("🧩 Recommended Exercises & Practices")
+        # ================= EXERCISES (ONLY FOR ADHD) =================
+        if group == "ADHD":
+            st.subheader("🧩 Recommended Exercises")
 
-        st.markdown("""
+            st.markdown("""
 **🫁 Breathing Exercise**
 - Inhale slowly for 4 seconds  
 - Hold for 2 seconds  
@@ -193,3 +197,4 @@ if os.path.exists(log_file):
     st.dataframe(log_df.tail(7))
 else:
     st.info("No behavior history available yet.")
+
